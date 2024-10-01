@@ -7,7 +7,9 @@
 
   \subsection{Lockable Hashtable}
   \label{sec:method:LHM}
-  TODO
+  During the solving process, the solvers store and update a mapping of variables to values and tack further information about the variables. For this the existing single-threaded top-down solver uses hashtables, since it allows for fast access and updates. However, for a multi-threaded solver the access to these datastructures has to be guarded by a mutex. This is necessary to allow only one thread to read and write the information belonging to a variable during a critical section. 
+  A simple idea is to lock the whole hashtable with a single mutex. This however takes away much potential for parallel work, since large parts of the solver are spent in critical sections.
+  We propose a \textit{lockable hashtable} that splits the mapping it stores into a set number \textit{n} buckets, where each of the buckets can be locked with a mutex. The bucket, in which the value for a variable is stored is determined by a hash function, e.g. the mapping for variable \textit{x} is stored in bucket $\text{hash}(x)\ \text{mod}\ n$. This allows for parallel work on multiple variables without waiting, as long has these variables are placed in different buckets.
 
   \subsection{Parallelized top-down solvers}
   \label{sec:method:td_parallel}
