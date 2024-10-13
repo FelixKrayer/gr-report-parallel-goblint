@@ -26,7 +26,7 @@
 
 
 % load additional packages
-\usepackage{lipsum}
+\usepackage{acronym}
 
 \newcommand{\gob} {\textsc{Goblint}}
 
@@ -46,6 +46,8 @@
 
 \maketitle
 
+
+
 \begin{abstract}
   TODO: This is a short abstract summarizing the main points of your article.
 \end{abstract}
@@ -57,7 +59,12 @@
 \input{chapters/04-evaluation.tex}
 \input{chapters/05-relatedWork.tex}
 \input{chapters/06-conclusions.tex}
-% TODO: abbreviations? (CFG, TD, LHM)
+
+\begin{acronym}
+  \acro{rhs}[\texttt{rhs}]{right-hand side}
+  \acro{cfg}[CFG]{control-flow graph}
+  \acro{td}[TD]{top-down solver}
+\end{acronym}
 
 % TODO bibliography
 
