@@ -3,10 +3,8 @@
 
   \subsection{Constraint systems with \texttt{create} edges}
   \label{sec:method:create}
-  We want to give the solvers hints, which variables can likely be iterated in parallel.
-  Note % explain here?
-  For this we introduce \textit{create} edges. \textit{Create} edges have a target variable $x$, so we ``create for $x$''. Similar to \textit{query} edges, they tell the solver, that a target variable has to be solved for a satisfying solution. However, unlike \textit{query} edges, where the value of the target variable is directly used in a \ac{rhs} evaluation, the result of a created for variable is not needed for that. Previously this was realized by 
-  The reason, why % or here?
+  We want to give the solvers hints, which variables can likely be iterated in parallel. As we explained in~\autoref{sec:background:constrSys}, in \gob\ a variable can have a \ac{rhs} that queries a variable but discards the result. This is a suitable location for parallelization, as a variable whose value is not needed anyway can be iterated in parallel to the iterations of the main solver. A sequential solver has to pause the current \ac{rhs} evaluation to compute a to-be-discarded solution for the queried variable, while a parallel solver can continue the \ac{rhs} evaluation while computing a solution for the queried variable in parallel.
+  To integrate this idea in our notion of a constraint system, we introduce \textit{create} edges. \textit{Create} edges have a target variable $x$, so we ``create for $x$''. Similar to \textit{query} edges, they require the solver, to solve the target variable for a satisfying solution. However, they also tell the solver, that the variable that is the origin of this \texttt{create} edge does not depend on the result.
 
   \subsection{Lockable Hash-table}
   \label{sec:method:LHM}
@@ -16,19 +14,22 @@
 
   \subsection{Parallelized top-down solvers}
   \label{sec:method:td_parallel}
-  In this section we describe the workings of three different parallel solvers as we implemented them in the \gob\ analyzer. The concepts for these solvers were given to us and discussed in private communication with Helmut Seidl, Michael Schwarz and Ali Rasim Kocal~\cite{privCom}. 
+  In this section we describe the workings of three different parallel solvers as we implemented them in the \gob\ analyzer. The concepts for these solvers were given to us and discussed in private communication with Helmut Seidl, Michael Schwarz and Ali Rasim Kocal~\cite{privCom}. The basis for all three solvers is the \ac{td} we described in~\autoref{sec:background:td}. We note here, that the stealing \ac{td} does not use the \texttt{create} edges we introduced in~\autoref{sec:method:create}, while the shared-memory \ac{td} and the disjunct \ac{td} need these edges to perform work in parallel.
 
     \subsubsection{Stealing TD}
     \label{sec:method:td_parallel:stealing}
-    The idea of the stealing \ac{td} is to start multiple \acp{td} in parallel. The hope is, that they find different spots in the constraint system where multiple iterations are needed. The solvers work independently of each other but have a shared data-structure for the value of the variables and tracking which variables are called and which are stable. If one solver at some point queries a variable that was already iterated by another one, it can use the result from that solver and is saved some work. These variables are then \textit{stolen} from the solver that worked on them previously.
+    The idea of the stealing \ac{td} is to start multiple \acp{td} in parallel. The hope is, that they find different spots in the constraint system where multiple iterations are needed. The parallel solvers work independently of each other but have a shared data-structure for the value of the variables and tracking which variables are called and which are stable. If one solver at some point queries a variable that was already iterated by another one, it can use the result from that solver. These variables are then \textit{stolen} from the solver that worked on them previously.
     For this concept to work, the solvers are organized in a hierarchy. Thus, each solver has a distinct \ac{prio} with higher prioritized solvers stealing variables from lower prioritized solvers. Instead of tracking if a variable is called as binary outcomes, the solvers write their \ac{prio} to the shared data-structure when setting a variable called. A special value indicates that a variable is completely uncalled. A solver sees any variable that has a lower called-\ac{prio} as uncalled and any variable with a higher or equal \ac{prio} as called. Stability is tracked and understood analogously. This means that higher prioritized solvers just overwrite called- and stable-\acp{prio} from lower solvers. 
     We say, the solver with prio $p$ \textit{owns} a variable, if this variable has the called-\ac{prio} $p$, and we call the process when a solver with a higher \ac{prio} overwrites the called-\ac{prio} from a lower prioritized solver \textit{stealing}. This means, that solvers have to check, if they still own a variable before updating its value with the result of a \ac{rhs} evaluation.
+    The current value, calledness and stability are tracked in a shared data-structure, for which a \textit{lockable hash-table} we introduced in~\autoref{sec:method:LHM} is used. The solvers track the \textit{influences}-relation and the set of \textit{wpoints} independently, i.e., each parallel solver has a private data-structure to store this information.
 
     \paragraph{Revival} We note here, that lower prioritized solvers often lose all their owned variables before the whole solving process is completed. In that case they terminate when they do not find any from their view uncalled variables to work on. This is especially an issue for larger programs, where after a while the most prioritized solver stole all variables and works like a single-threaded solver after that point. This is why we introduce revival and work-finding for terminated solvers.
+    % TODO
 
-    \subsubsection{Shared Memory TD}
+    \subsubsection{Shared-Memory TD}
     \label{sec:method:td_parallel:sharedMem}
-    TODO
+    In contrast to the previously introduce stealing \ac{td}, the shared-memory \ac{td} does not start multiple parallel solvers in the beginning but uses a thread-pool instead. The shared-memory \ac{td} adds a task to solve for a variable $x$ every time a \textit{create} edge for variable $x$ is encountered in a \ac{rhs} evaluation. These tasks are then executed in parallel.
+    This solver tracks all information about the variables in a shared data-structure for all tasks. Concretely a \textit{lockable hash-table} introduced in~\autoref{sec:method:LHM} is used.
 
     \subsubsection{Disjunct TD}
     \label{sec:method:td_parallel:disjunct}
