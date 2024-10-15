@@ -3,20 +3,28 @@
 
   \subsection{Constraint systems with \texttt{create} edges}
   \label{sec:method:create}
-  TODO
+  We want to give the solvers hints, which variables can likely be iterated in parallel.
+  Note % explain here?
+  For this we introduce \textit{create} edges. \textit{Create} edges have a target variable $x$, so we ``create for $x$''. Similar to \textit{query} edges, they tell the solver, that a target variable has to be solved for a satisfying solution. However, unlike \textit{query} edges, where the value of the target variable is directly used in a \ac{rhs} evaluation, the result of a created for variable is not needed for that. Previously this was realized by 
+  The reason, why % or here?
 
   \subsection{Lockable Hash-table}
   \label{sec:method:LHM}
-  During the solving process, the solvers store and update a mapping of variables to values and tack further information about the variables. For this the existing single-threaded top-down solver uses hashtables, since it allows for fast access and updates. However, for a multi-threaded solver the access to these datastructures has to be guarded by a mutex. This is necessary to allow only one thread to read and write the information belonging to a variable during a critical section. 
+  During the solving process, the solvers store and update a mapping of variables to values and tack further information about the variables. For this the existing single-threaded top-down solver uses hash-tables, since it allows for fast access and updates. However, for a multithreaded solver the access to these data-structures has to be guarded by a mutex. This is necessary to allow only one thread to read and write the information belonging to a variable during a critical section. 
   A simple idea is to lock the whole hash-table with a single mutex. This however takes away much potential for parallel work, since large parts of the solver are spent in critical sections.
   We propose a \textit{lockable hash-table} that splits the mapping it stores into a set number of \textit{n} buckets, where each of the buckets can be locked with a mutex. The bucket, in which the value for a variable is stored is determined by a hash function, e.g. the mapping for variable \textit{x} is stored in bucket $\text{hash}(x)\ \text{mod}\ n$. This allows for parallel work on multiple variables without waiting, as long as these variables are placed in different buckets.
 
   \subsection{Parallelized top-down solvers}
   \label{sec:method:td_parallel}
+  In this section we describe the workings of three different parallel solvers as we implemented them in the \gob\ analyzer. The concepts for these solvers were given to us and discussed in private communication with Helmut Seidl, Michael Schwarz and Ali Rasim Kocal~\cite{privCom}. 
 
     \subsubsection{Stealing TD}
     \label{sec:method:td_parallel:stealing}
-    TODO
+    The idea of the stealing \ac{td} is to start multiple \acp{td} in parallel. The hope is, that they find different spots in the constraint system where multiple iterations are needed. The solvers work independently of each other but have a shared data-structure for the value of the variables and tracking which variables are called and which are stable. If one solver at some point queries a variable that was already iterated by another one, it can use the result from that solver and is saved some work. These variables are then \textit{stolen} from the solver that worked on them previously.
+    For this concept to work, the solvers are organized in a hierarchy. Thus, each solver has a distinct \ac{prio} with higher prioritized solvers stealing variables from lower prioritized solvers. Instead of tracking if a variable is called as binary outcomes, the solvers write their \ac{prio} to the shared data-structure when setting a variable called. A special value indicates that a variable is completely uncalled. A solver sees any variable that has a lower called-\ac{prio} as uncalled and any variable with a higher or equal \ac{prio} as called. Stability is tracked and understood analogously. This means that higher prioritized solvers just overwrite called- and stable-\acp{prio} from lower solvers. 
+    We say, the solver with prio $p$ \textit{owns} a variable, if this variable has the called-\ac{prio} $p$, and we call the process when a solver with a higher \ac{prio} overwrites the called-\ac{prio} from a lower prioritized solver \textit{stealing}. This means, that solvers have to check, if they still own a variable before updating its value with the result of a \ac{rhs} evaluation.
+
+    \paragraph{Revival} We note here, that lower prioritized solvers often lose all their owned variables before the whole solving process is completed. In that case they terminate when they do not find any from their view uncalled variables to work on. This is especially an issue for larger programs, where after a while the most prioritized solver stole all variables and works like a single-threaded solver after that point. This is why we introduce revival and work-finding for terminated solvers.
 
     \subsubsection{Shared Memory TD}
     \label{sec:method:td_parallel:sharedMem}
