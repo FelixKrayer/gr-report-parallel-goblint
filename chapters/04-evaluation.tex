@@ -1,10 +1,20 @@
 \section{Evaluation}
 \label{sec:eval}
+We want to evaluate and compare our implementations of the three different parallel solvers in \gob. Before comparing their performance with respect to evaluation time, we investigate if the parallelization results in a loss of precision.
+The source repository of \gob\ contains more than 1400 regression tests. These are small programs focussed on testing various edge cases of the different features of the analyzer. We observe that for less than 0.5\% of the regression tests the parallelized solvers from~\autoref{sec:method:td_parallel} were less precise than the single-threaded solver we introduced in~\autoref{sec:background:td}. This loss of precision was non-deterministic, i.e., in some runs there was no loss of precision observed. Furthermore, when analyzing real-world programs like we do in the following sections, no loss of precision was observed in the output. Thus, we believe that the parallelized solvers can be considered as precise as the single-threaded solver we compared them against. A precision loss was only observed in a few regression tests specialized in testing edge cases. We note here that \gob\ typically uses an improved version of the single-threaded \ac{td} from this report and thus is even more precise in 32 of the regression tests.
 
-  \subsection{GNU coreutils}
-  \label{sec:eval:coreutils}
-  TODO \cite{gnuCoreutils}
+  \subsection{Analysis speed}
+  \label{sec:eval:speed}
+  To evaluate the speed of the different solvers, we analyze several programs and compare the time of the analysis. We use two groups of programs for this evaluation. The first are a selection of the GNU core utility programs (coreutils)~\cite{gnuCoreutils}. Before analysis these programs were combined, i.e., a single source code file was produced, that contains the original program together with the dependencies of other included files. The exact code files used lie in the \gob\ benchmark repository~\cite{goblintBench} that contains benchmark programs for the analyzed.
+  The second group are programs from the pthread folder of the \gob\ benchmark repository. These are programs that use threads more extensively than the coreutil programs, i.e., they use threads slightly more often and the spawned threads perform much more work. We included these programs, since the shared memory \ac{td} and the disjunct \ac{td} depend on threads being spawned in the analyzed program to add tasks that are solved in parallel.\\
+  For comparison, we analyze each program once with the single-threaded \ac{td} from~\autoref{sec:background:td} and twice with each of the parallelized \acp{td} from~\autoref{sec:method:td_parallel}, where one run was done with only the main thread working and one run with two worker threads. We do this, so we can compare the analysis time between the single-threaded \ac{td} and a certain parallelized \ac{td} in more detail, e.g., attribute differences in analysis time to the inherently different algorithms of the solvers or to the parallelization.
 
-  \subsection{SV-comp benchmarks}
-  \label{sec:eval:sv-comp}
-  TODO \cite{svBench}
+  \begin{figure}
+    \begin{tabular}{l|l}
+      cksum & 1.0s
+    \end{tabular}
+    \caption[Eval results]{Eval results}
+    \label{fig:results}
+  \end{figure}
+
+  When investigating the results of the analysis from~\autoref{fig:results}
