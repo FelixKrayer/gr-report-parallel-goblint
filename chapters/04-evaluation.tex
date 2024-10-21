@@ -7,14 +7,37 @@ The source repository of \gob\ contains more than 1400 regression tests. These a
   \label{sec:eval:speed}
   To evaluate the speed of the different solvers, we analyze several programs and compare the time of the analysis. We use two groups of programs for this evaluation. The first are a selection of the GNU core utility programs (coreutils)~\cite{gnuCoreutils}. Before analysis these programs were combined, i.e., a single source code file was produced, that contains the original program together with the dependencies of other included files. The exact code files used lie in the \gob\ benchmark repository~\cite{goblintBench} that contains benchmark programs for the analyzed.
   The second group are programs from the pthread folder of the \gob\ benchmark repository. These are programs that use threads more extensively than the coreutil programs, i.e., they use threads slightly more often and the spawned threads perform much more work. We included these programs, since the shared memory \ac{td} and the disjunct \ac{td} depend on threads being spawned in the analyzed program to add tasks that are solved in parallel.\\
-  For comparison, we analyze each program once with the single-threaded \ac{td} from~\autoref{sec:background:td} and twice with each of the parallelized \acp{td} from~\autoref{sec:method:td_parallel}, where one run was done with only the main thread working and one run with two worker threads. We do this, so we can compare the analysis time between the single-threaded \ac{td} and a certain parallelized \ac{td} in more detail, e.g., attribute differences in analysis time to the inherently different algorithms of the solvers or to the parallelization.
+  For comparison, we analyze each program once with the single-threaded \ac{td} from~\autoref{sec:background:td} as a baseline and twice with each of the parallelized \acp{td} from~\autoref{sec:method:td_parallel}, where one run was done with only the main thread working and one run with two worker threads. We do this, so we can compare the analysis time between the single-threaded \ac{td} and a certain parallelized \ac{td} in more detail, e.g., attribute differences in analysis time to the inherently different algorithms of the solvers or to the parallelization. Since the programs are different in size and general analysis time, we mainly focus on the \textit{speedup} as a metric. We calculate the speedup of the parallelized solvers with the following formula:
+  \begin{equation*}
+    \text{speedup(parallel solver)} = \frac{\text{time(baseline solver)}}{\text{time(parallel solver)}}
+  \end{equation*}
+  With this we get a value larger than 1, if the parallelized solver is faster and a value smaller than 1 if it is slower. The raw timing values are listed in the appendix in~\autoref{fig:timing_all}.
 
   \begin{figure}
-    \begin{tabular}{l|l}
-      cksum & 1.0s
-    \end{tabular}
-    \caption[Eval results]{Eval results}
-    \label{fig:results}
+    \includegraphics[width=0.5\textwidth]{../resources/Stealing_draft.png}
+    \caption[Speedup of the stealing \ac{td}]{Speedup of the stealing \ac{td}. The runs with a single worker thread are shown in blue, while runs with two threads are represented by orange bars. The red bar marks a timeout in a run with 2 threads}
+    \label{fig:speedup_stealing}
+    % TODO: list programs
   \end{figure}
 
-  When investigating the results of the analysis from~\autoref{fig:results}
+  When investigating the results for the stealing \ac{td} from~\autoref{fig:speedup_stealing} we notice, that in general this solver is slower or just as fast as the baseline. Furthermore, the difference between running this solver single threaded or with two worker threads is minimal. Interesting are the programs \texttt{df.c} and \texttt{ls.c} where the stealing \ac{td} achieved a speedup of 1.2 and 1.3 respectively. However, for the program \texttt{cp.c} it was significantly slower than the baseline. Unfortunately we are not able to explain the timeout for the \texttt{knot.c} program, as it terminated in a reasonable time when analyzed with a debugging configuration.
+
+  \begin{figure}
+    \includegraphics[width=0.5\textwidth]{../resources/SharedMem_draft.png}
+    \caption[Speedup of the shared memory \ac{td}]{Speedup of the shared memory \ac{td}. The runs with a single worker thread are shown in blue, while runs with two threads are represented by orange bars}
+    \label{fig:speedup_shared_mem}
+    % TODO: list programs
+  \end{figure}
+
+  \autoref{fig:speedup_shared_mem} shows the speedup results for the shared memory \ac{td}. We see this solver being significantly slower for all of the coreutil programs, with the double threaded configuration only outperforming the single threaded one in three cases. However, the pthread group of programs paint a different picture. As expected, the single threaded configuration is slower than the baseline for these programs. When allowing the shared memory \ac{td} to use a second worker thread for parallel work, it achieves significant speedup for four of the six programs compared to the baseline. This speedup even reaches 1.4 for two of these.
+
+  \begin{figure}
+    \includegraphics[width=0.5\textwidth]{../resources/Disjunct_draft.png}
+    \caption[Speedup of the disjunct \ac{td}]{Speedup of the disjunct \ac{td}. The runs with a single worker thread are shown in blue, while runs with two threads are represented by orange bars}
+    \label{fig:speedup_disjunct}
+    % TODO: list programs
+  \end{figure}
+
+  We see the disjunct \ac{td} keeping up with the baseline for most of the coreutil programs when it is run with two worker threads. Similar to the shared memory \ac{td}, it performs better on the pthread programs, where it reaches a comparatively high speedup of around 1.8 for three programs.
+
+  %TODO: exact timing values are in appendix

@@ -28,6 +28,8 @@
 % load additional packages
 \usepackage{acronym}
 \usepackage{enumitem}
+\usepackage{pgfplots}
+\usepackage{csvsimple}
 
 \newcommand{\gob} {\textsc{Goblint}}
 
@@ -61,6 +63,7 @@
 \input{chapters/05-relatedWork.tex}
 \input{chapters/06-conclusions.tex}
 
+\section*{Abbreviations}
 \begin{acronym}
   \acro{rhs}[\texttt{rhs}]{right-hand side}
   \acro{cfg}[CFG]{control-flow graph}
@@ -70,5 +73,20 @@
 
 \bibliographystyle{splncs04}
 \bibliography{bibliography.bib}
+
+\newpage
+\onecolumn
+\section*{Appendix}
+%TODO: refine figure
+\begin{table}[h]
+  \begin{tabular}{l|r|r|r|r|r|r|r}%
+    \bfseries Program & \bfseries baseline & \bfseries stealing & \bfseries stealing & \bfseries shared memory & \bfseries shared memory & \bfseries disjunct & \bfseries disjunct\\
+    & & \bfseries 1 thread & \bfseries 2 threads & \bfseries 1 thread & \bfseries 2 threads & \bfseries 1 thread & \bfseries 2 threads
+    \csvreader[head to column names]{resources/index.csv}{}
+    {\\\hline\name&\default&\pstealingone&\pstealingtwo&\pbaseone&\pbasetwo&\pdistonesg&\pdisttwosg}
+  \end{tabular}
+  \caption{Timing values in seconds from the benchmarks. The stealing solver with two threads timeouted for the knot program at 900s.}
+  \label{fig:timing_all}
+\end{table}
 
 \end{document}

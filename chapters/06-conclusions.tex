@@ -1,7 +1,9 @@
 \section{Conclusions}
 \label{sec:conclusions}
-TODO
-- more create edges (e.g. unknown function)
+We introduced \texttt{create} edges to the side-effecting constraint systems used in \gob\ to let \acp{rhs} indicate where parallelized solving is reasonable. Furthermore, we adapted the framework of the analyzer, such that the parallelized solvers can run without concurrency issues and implemented a lockable hash-table to allow for concurrent updates on that data structure. As our main contribution, we implemented three concepts of parallelized \acl{td} in \gob and evaluated them on different types of programs.\\
+From the Evaluations in~\autoref{sec:eval} we conclude, that the three parallelized solvers can be considered as precise as the single-threaded solver. The speedup of parallelized solving depends a lot on the program to be analyzed and the selected solver. The stealing \ac{td} was the only solver that was able to achieve a noticeable speedup on two of the coreutil programs. In contrast to that, the shared memory \ac{td} and the disjunct \ac{td} perform worse on these programs but provide noticeable speedup on the pthread group of programs. This is to be expected however, since these two solvers depend on the \texttt{create} edges we placed at the creation of threads. As for a comparison between these two solvers, we saw the disjunct \ac{td} performing better than the shared memory \ac{td} in general.
+
+  \label{sec:conclusions:futureWork} 
   \subsection{Future Work}
-  \label{sec:conclusions:futureWork}
-  TODO
+  We think that we have not yet exhausted the potential of parallelization. Besides thread creation, there are other locations in the constraint system, where parallelization can potentially be useful, e.g., when at a function call, it is not certain which function is called and both have to be evaluated in parallel. Thus, we want to introduce a different kind of \texttt{create} edge at such positions. In contrast to the existing one, this \texttt{create} indicates that the value of the target variable is queried at a late point.
+  Furthermore, we want to investigate the programs more closely, where certain solvers achieve a speedup. We hope to identify certain characteristics that we can use to automatically decide which solver is likely best suited for analyzing this program quickly.
