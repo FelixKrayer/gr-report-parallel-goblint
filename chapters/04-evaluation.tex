@@ -1,7 +1,7 @@
 \section{Evaluation}
 \label{sec:eval}
 We want to evaluate and compare our implementations of the three different parallel solvers in \gob. Before comparing their performance with respect to evaluation time, we investigate if the parallelization results in a loss of precision.
-The source repository of \gob\ contains more than 1400 regression tests. These are small programs focussed on testing various edge cases of the different features of the analyzer. We observe that for less than 0.5\% of the regression tests the parallelized solvers from~\autoref{sec:method:td_parallel} were less precise than the single-threaded solver we introduced in~\autoref{sec:background:td}. This loss of precision was non-deterministic, i.e., in some runs there was no loss of precision observed. Furthermore, when analyzing real-world programs like we do in the following sections, no loss of precision was observed in the warnings \gob\ produced. These warnings include but are not limited to notifications about thread-(un)save memory locations and dead lines of code. Thus, we believe that the parallelized solvers can be considered as precise as the single-threaded solver we compared them against. We note here that \gob\ typically uses an improved version of the single-threaded \ac{td} from this report and thus is even more precise in 32 of the regression tests.
+The source repository of \gob\ contains more than 1400 regression tests. These are small programs focussed on testing various edge cases of the different features of the analyzer. We executed all regression tests five times with each of the parallelized solvers from~\autoref{sec:method:td_parallel}. From the results, we observe that for less than 0.5\% of the tests the parallelized solvers were less precise than the single-threaded solver we introduced in~\autoref{sec:background:td}. This loss of precision was non-deterministic, i.e., in some runs there was no loss of precision observed. We do not notice a difference in the number of failing tests for the three different parallelized solvers. Furthermore, when analyzing real-world programs like we do in the following sections, no loss of precision was observed in the warnings \gob\ produced. These warnings include but are not limited to notifications about thread-(un)save memory locations and dead lines of code. Thus, we believe that the parallelized solvers can be considered as precise as the single-threaded solver we compared them against. We note here that \gob\ typically uses an improved version of the single-threaded \ac{td} from this report and thus is even more precise in 32 of the regression tests.
 
   \subsection{Analysis speed}
   \label{sec:eval:speed}
@@ -12,7 +12,6 @@ The source repository of \gob\ contains more than 1400 regression tests. These a
     \text{speedup(parallel solver)} = \frac{\text{time(baseline solver)}}{\text{time(parallel solver)}}
   \end{equation*}
   With this we get a value larger than 1, if the parallelized solver is faster and a value smaller than 1 if it is slower. The raw timing values are listed in the appendix in~\autoref{fig:timing_all}.
-
   \begin{figure}
     %TODO: Adapt Colors. !!!WATCH CAPTION!!!
     \centering
@@ -86,12 +85,11 @@ The source repository of \gob\ contains more than 1400 regression tests. These a
       \legend{1 Thread, 2 Threads}  
       \end{axis}
     \end{tikzpicture}
-    \caption[Speedup of the stealing \ac{td}]{Speedup of the stealing \ac{td}. The runs with a single worker thread are shown in blue, while runs with two threads are represented by red bars. The twelve leftmost programs make up the coreutil group, while the six rightmost programs belong to the pthread group of programs. The run with two threads for the knot program resulted in a timeout of 900s}
+    \caption[Speedup of the stealing \ac{td}]{Speedup of the stealing \ac{td}. Runs with a single worker thread are shown in blue, while runs with two threads are represented by red bars. The twelve leftmost programs make up the coreutil group, while the six rightmost programs belong to the pthread group of programs. The run with two threads for the \texttt{knot} program resulted in a timeout of 900s}
     \label{fig:speedup_stealing}
   \end{figure}
 
-  When investigating the results for the stealing \ac{td} from~\autoref{fig:speedup_stealing}, we notice, that in general this solver is slower or just as fast as the baseline. Furthermore, the difference between running this solver single threaded or with two worker threads is minimal. Interesting are the programs \texttt{df.c} and \texttt{ls.c} where the stealing \ac{td} achieved a speedup of 1.2 and 1.3 respectively. However, for the program \texttt{cp.c} it was significantly slower than the baseline. Unfortunately we are not able to explain the timeout for the \texttt{knot.c} program, as it terminated in a reasonable time when analyzed with a debugging configuration. We note here, that we only evaluate the stealing \ac{td} with the addition of revival, since the stealing \ac{td} is strictly faster with revival.
-
+  When investigating the results for the stealing \ac{td} from~\autoref{fig:speedup_stealing}, we notice, that in general this solver is slower or just as fast as the baseline. Furthermore, the difference between running this solver single threaded or with two worker threads is minimal. Interesting are the programs \texttt{df} and \texttt{ls} where the stealing \ac{td} achieved a speedup of 1.2 and 1.3 respectively. However, for the program \texttt{cp} it was significantly slower than the baseline. Unfortunately we are not able to explain the timeout for the \texttt{knot} program, as it terminated in a reasonable time when analyzed with a debugging configuration. We note here, that we only evaluate the stealing \ac{td} with the addition of revival, since the stealing \ac{td} is strictly faster with revival.
   \begin{figure}
     %TODO: Adapt Colors. !!!WATCH CAPTION!!!
     \centering
@@ -165,18 +163,89 @@ The source repository of \gob\ contains more than 1400 regression tests. These a
       \legend{1 Thread, 2 Threads}  
       \end{axis}
     \end{tikzpicture}
-    \caption[Speedup of the shared memory \ac{td}]{Speedup of the shared memory \ac{td}. The runs with a single worker thread are shown in blue, while runs with two threads are represented by red bars. The twelve leftmost programs make up the coreutil group, while the six rightmost programs belong to the pthread group of programs}
+    \caption[Speedup of the shared memory \ac{td}]{Speedup of the shared memory \ac{td}. Runs with a single worker thread are shown in blue, while runs with two threads are represented by red bars. The twelve leftmost programs make up the coreutil group, while the six rightmost programs belong to the pthread group of programs}
     \label{fig:speedup_shared_mem}
   \end{figure}
 
-  \autoref{fig:speedup_shared_mem} shows the speedup results for the shared memory \ac{td}. We see this solver being significantly slower for all of the coreutil programs, with the double threaded configuration only outperforming the single threaded one in three cases. However, the pthread group of programs paint a different picture. As expected, the single threaded configuration is slower than the baseline for these programs. When allowing the shared memory \ac{td} to use a second worker thread for parallel work, it achieves significant speedup for four of the six programs compared to the baseline. This speedup even reaches 1.4 for two of these.
-
+  \autoref{fig:speedup_shared_mem} shows the speedup results for the shared memory \ac{td}. We see this solver being significantly slower for all the coreutil programs, with the double threaded configuration only outperforming the single threaded one in three cases. However, the pthread group of programs paint a different picture. As expected, the single threaded configuration is slower than the baseline for these programs. When allowing the shared memory \ac{td} to use a second worker thread for parallel work, it achieves significant speedup for four of the six programs compared to the baseline. This speedup even reaches 1.4 for two of these.
   \begin{figure}
-    \includegraphics[width=0.5\textwidth]{../resources/Disjunct_draft.png}
-    \caption[Speedup of the disjunct \ac{td}]{Speedup of the disjunct \ac{td}. The runs with a single worker thread are shown in blue, while runs with two threads are represented by orange bars. The twelve leftmost programs make up the coreutil group, while the six rightmost programs belong to the pthread group of programs}
+        %TODO: Adapt Colors. !!!WATCH CAPTION!!!
+        \centering
+        \begin{tikzpicture}
+          \begin{axis}[ymin=-0.6, ymax=1.2, xmin=0, xmax=1, yticklabel=\empty, xticklabel=\empty, x tick style=transparent, y tick style=transparent]
+              \draw (axis cs:0,-0.4) -- (axis cs:1,-0.4);
+              \draw (axis cs:0,-0.2) -- (axis cs:1,-0.2);
+              \draw (axis cs:0,0) -- (axis cs:1,0);
+              \draw (axis cs:0,0.2) -- (axis cs:1,0.2);
+              \draw (axis cs:0,0.4) -- (axis cs:1,0.4);
+              \draw (axis cs:0,0.6) -- (axis cs:1,0.6);
+              \draw (axis cs:0,0.8) -- (axis cs:1,0.8);
+              \draw (axis cs:0,1) -- (axis cs:1,1);
+          \end{axis}
+          \begin{axis}[
+              ybar=0pt,
+              ymin=-0.6,ymax=1.2,
+              ylabel = speedup,
+              ytick pos = left,
+              ytick distance = 0.2,
+              ytick style = transparent,
+              yticklabels={,0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2},
+              symbolic x coords={cksum, cp, cut, dd,df,du,ls,mv,nohup,ptx,sort,tail,,aget,knot,pfscan,ctrace,smtprc,zebedee},
+              xtick=data,
+              xtick style = transparent,
+              x tick label style={rotate=90, xshift=5pt},
+              enlarge x limits={abs=6pt},
+              bar width = 4pt,
+              legend style={at={(0.35,0.97)},anchor=north east, font=\footnotesize, legend cell align=left,},
+              ]
+              \addplot[ybar, fill=blue, area legend] coordinates {
+                (cksum,-0.06)
+                (cp,-0.31)
+                (cut,-0.28)
+                (dd,-0.07)
+                (df,0.02)
+                (du,0.02)
+                (ls,0.01)
+                (mv,0.02)
+                (nohup,-0.28)
+                (ptx,-0.05)
+                (sort,-0.11)
+                (tail,0.00)
+                (aget,0.00)
+                (knot,0.00)
+                (pfscan,0.42)
+                (ctrace,0.05)
+                (smtprc,0.45)
+                (zebedee,-0.01)
+                }; 
+              \addplot[ybar, fill=red, area legend] coordinates {
+                (cksum,0.13)
+                (cp,-0.32)
+                (cut,-0.09)
+                (dd,-0.06)
+                (df,-0.09)
+                (du,-0.09)
+                (ls,-0.13)
+                (mv,-0.06)
+                (nohup,0.00)
+                (ptx,-0.01)
+                (sort,-0.13)
+                (tail,-0.08)
+                (aget,0.46)
+                (knot,0.59)
+                (pfscan,0.77)
+                (ctrace,0.91)
+                (smtprc,1.11)
+                (zebedee,0.83)
+                }; 
+          \legend{1 Thread, 2 Threads}  
+          \end{axis}
+        \end{tikzpicture}
+    \caption[Speedup of the disjunct \ac{td} with sharing of side-effected variables]{Speedup of the disjunct \ac{td} with sharing of side-effected variables. Runs with a single worker thread are shown in blue, while runs with two threads are represented by red bars. The twelve leftmost programs make up the coreutil group, while the six rightmost programs belong to the pthread group of programs}
     \label{fig:speedup_disjunct}
-    % TODO: list programs
   \end{figure}
 
-  %TODO: Dist TD shared globals!!!
-  We see the disjunct \ac{td} keeping up with the baseline for most of the coreutil programs when it is run with two worker threads. Similar to the shared memory \ac{td}, it performs better on the pthread programs, where it reaches a comparatively high speedup of around 1.8 for three programs.
+  Through our benchmarks we noticed that the variant of the disjunct \ac{td} where side-effected variables are shared is slower when analyzing the coreutil programs but faster for the pthread programs compared to the original disjunct \ac{td}. The original variant is approximately as fast as the baseline for the coreutil programs, but achieves a speedup of around 1.8 for three of the pthread programs.
+  Like the previously discussed shared memory \ac{td}, the disjunct \ac{td} is built around the \texttt{create} edges we inserted into the constraint system and therefore, we are most interested in the performance on the pthread programs. In the following we focus on the speedups for the variant that shares side-effected variables, since it performed better for the pthread programs. The speedups for the different programs are illustrated in~\autoref{fig:speedup_disjunct}. As mentioned, for the coreutil programs we see the disjunct \ac{td} being slower than or about as fast as the baseline. For the pthread group of programs however, this solver provides significant speedup when run with two worker threads. Interestingly enough, the speedup for the \texttt{smtprc} program exceedsd 2.0, which is in theory the highest possible speedup that can be achieved by doubling the number of worker threads. We believe the reason for this peculiarity is the fact, that the solver data is distributed over multiple tasks, reducing the size of the individual data-structures. The frequent accesses to smaller data-structures are likely quicker. Thus, it is plausible that the disjunct \ac{td} can achieve a speedup higher than 2.0 when having two threads available. The solver data being distributed in smaller data-structures would also explain, how the disjunct \ac{td} can be faster than the baseline even when it is just run with a single worker thread like it is the case for the \texttt{pfscan} and the \texttt{smtprc} program.\\
+  %TODO: correlation between size of program and speedup
+  Overall, we see the disjunct \ac{td} achieving a significant speedup on the pthread group programs. While the shared memory \ac{td} also provides a speedup for these programs, the disjunct \ac{td} outperforms it in almost every case. The stealing \ac{td}, implementing a very different approach that does not depend on \texttt{create} edges in the constraint system, does not provide a speedup for the pthread programs, but it is the only one of the three solvers that achieves a noticeable speedup for any of the coreutil programs, i.e., the \texttt{df} and the \texttt{ls} program.

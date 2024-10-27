@@ -30,6 +30,27 @@
 \usepackage{enumitem}
 \usepackage{pgfplots}
 \usepackage{csvsimple}
+\usepackage{listings}
+\usepackage{lstautogobble}
+
+\definecolor{TUMBlue}{HTML}{0065BD}
+\definecolor{TUMAccentOrange}{HTML}{E37222}
+\definecolor{TUMAccentGreen}{HTML}{A2AD00}
+
+% Settings for lstlistings
+\lstset{
+  numbers=left,
+  %frame=single,
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  autogobble,
+  keywordstyle=\bfseries\color{TUMBlue},
+  stringstyle=\color{TUMAccentGreen},
+  commentstyle=\color{TUMAccentGreen},
+  captionpos=b,
+  basicstyle=\footnotesize,
+  numbers=none
+}
 
 \newcommand{\gob} {\textsc{Goblint}}
 
