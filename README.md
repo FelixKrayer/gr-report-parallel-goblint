@@ -8,3 +8,5 @@ We implemented three different approaches of parallel solvers in the \gob\ stati
 Benchmarks of the three solvers compared to a baseline show, that the speedup depends on the analyzed program. This is due to how we modified the constraint system to give parallelization hints. Overall we achieved a satisfying speedup for certain programs, where parallelization hints were well-placed, with the best-performing solver reaching a speedup of around 2.0 when using two worker threads for a number of programs. Additionally, another solver provided a slight speedup for two other programs. We were not able to find a correlation between the size of the analyzed program and the speedup achieved.
 
 Our work provides a foundation for further research in this area, focusing on improving the parallelization hints or developing strategies to select a solver based on the program to be analyzed.
+
+[full report](https://github.com/FelixKrayer/gr-report-parallel-goblint/blob/main/Report_2024_10_27.pdf)
